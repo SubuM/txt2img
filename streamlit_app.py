@@ -285,17 +285,12 @@ def _save_generated_image(
         )
 
 
-def _fetch_all_metadata(
-    username_filter: str | None = None, prompt_query: str | None = None
-) -> list[sqlite3.Row]:
+def _fetch_all_metadata(username_filter: str | None = None) -> list[sqlite3.Row]:
     clauses: list[str] = []
     params: list[object] = []
     if username_filter:
         clauses.append("username = ?")
         params.append(username_filter)
-    if prompt_query:
-        clauses.append("prompt LIKE ?")
-        params.append(f"%{prompt_query}%")
     where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
     sql = (
         "SELECT id, username, prompt, model, filename, size_bytes, sha256, created_at "
@@ -536,15 +531,10 @@ def _render_admin_archive_view(admin_user: str) -> None:
             )
         ]
 
-    filter_col1, filter_col2 = st.columns(2)
-    with filter_col1:
-        selected_user = st.selectbox("Filter by user", ("All users", *distinct_users))
-    with filter_col2:
-        prompt_search = st.text_input("Search prompt text")
+    selected_user = st.selectbox("Filter by user", ("All users", *distinct_users))
 
     records = _fetch_all_metadata(
         username_filter=None if selected_user == "All users" else selected_user,
-        prompt_query=prompt_search.strip() or None,
     )
 
     if not records:
